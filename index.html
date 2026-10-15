@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Prince Studio — Portfolio CMS</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text y='.9em' font-size='80' font-family='serif' fill='%23ff4500'>P</text></svg>">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*.cloudinary.com https://raw.githubusercontent.com; media-src 'self' https://*.cloudinary.com; connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://*.cloudinary.com; frame-src 'self' https://analytics.google.com;">
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script src="config.js" onerror="void 0"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- PASSCODE GATE -->
+<div id="passcode-gate" style="position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+  <h2 style="color:var(--accent);">Prince Studio</h2>
+  <input id="passcode-input" type="password" placeholder="Enter passcode" style="padding:0.75rem 1rem;font-size:1rem;width:250px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:4px;outline:none;" onkeydown="if(event.key==='Enter')checkPasscode()"/>
+  <button onclick="checkPasscode()" style="background:var(--accent);color:#fff;border:none;padding:0.6rem 1.5rem;border-radius:4px;cursor:pointer;font-weight:600;">Unlock</button>
+  <p id="passcode-error" style="color:var(--err);display:none;">Wrong passcode</p>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Prince Studio</div>
+    <div class="login-sub">Portfolio CMS</div>
+    <p class="login-section">GitHub</p>
+    <div class="fg"><label>Username</label><input id="gh-user" placeholder="MawuliPRINCE"/></div>
+    <div class="fg"><label>Repository</label><input id="gh-repo" placeholder="my-portfolio"/></div>
+    <div class="fg"><label>Branch</label><input id="gh-branch" value="main"/></div>
+    <div class="fg"><label>Personal Access Token</label><input id="gh-token" type="password" placeholder="ghp_…"/></div>
+    <p class="login-section">Cloudinary (for media uploads)</p>
+    <div class="row2">
+      <div class="fg"><label>Cloud Name</label><input id="cl-cloud" placeholder="your-cloud"/></div>
+      <div class="fg"><label>Upload Preset</label><input id="cl-preset" placeholder="e.g. prince_studio_unsigned"/></div>
+    </div>
+    <p class="login-section">Analytics (optional)</p>
+    <div class="fg"><label>Google Analytics Measurement ID</label><input id="ga-id" placeholder="G-XXXXXXXXXX"/></div>
+    <div id="login-error"></div>
+    <button class="btn btn-p" style="width:100%;margin-top:1.25rem;" onclick="handleLogin()">Connect to Studio</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topnav">
+    <span class="topnav-logo">Prince Studio</span>
+    <span class="topnav-repo" id="repo-display"></span>
+    <div class="topnav-right">
+      <button class="btn btn-s btn-sm" onclick="openHistoryModal()">🕘 History</button>
+      <button class="btn btn-s btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="switchTab('projects')">📁 Projects</button>
+    <button class="tab" onclick="switchTab('site')">🌐 Site Content</button>
+    <button class="tab" onclick="switchTab('reviews')">⭐ Reviews</button>
+    <button class="tab" onclick="switchTab('bookings')">📬 Bookings <span class="tab-badge" id="unread-badge" style="display:none">0</span></button>
+    <button class="tab" onclick="switchTab('analytics')">📊 Analytics</button>
+  </div>
+
+  <div class="panels">
+
+    <!-- PROJECTS PANEL -->
+    <div class="panel on" id="panel-projects">
+      <div class="proj-shell">
+        <div class="sidebar">
+          <div class="sb-head">
+            <span class="sb-head-label">Projects (<span id="proj-count">0</span>)</span>
+            <button class="btn btn-p btn-sm" onclick="addProject()">+ New</button>
+          </div>
+          <div style="padding:.5rem 1rem;display:flex;gap:.5rem;align-items:center;border-bottom:1px solid var(--border);">
+            <input type="checkbox" id="select-all-projects" onchange="toggleSelectAll(this.checked)" style="width:auto;"/>
+            <label for="select-all-projects" style="margin:0;font-size:.6rem;">Select All</label>
+            <button class="btn btn-s btn-sm" onclick="bulkHide()" style="margin-left:auto;">Hide</button>
+            <button class="btn btn-s btn-sm" onclick="bulkShow()">Show</button>
+            <button class="btn btn-d btn-sm" onclick="bulkDelete()">Del</button>
+          </div>
+          <div class="sb-list" id="sb-list"></div>
+          <div class="pub-bar">
+            <button class="btn btn-p" id="pub-btn" onclick="publishAll()" style="flex:1;">Publish All</button>
+            <div class="pub-spin" id="pub-spin"></div>
+          </div>
+        </div>
+        <div class="editor-area" id="editor-wrap">
+          <div class="empty-state">
+            <h2>No project selected</h2>
+            <p>Choose a project from the list or create a new one.</p>
+            <button class="btn btn-p" style="width:auto;" onclick="addProject()">+ New Project</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SITE CONTENT PANEL -->
+    <div class="panel" id="panel-site">
+      <div class="site-shell">
+        <div class="site-tabs">
+          <button class="st on" onclick="switchSiteTab('home')">🏠 Home Page</button>
+          <button class="st" onclick="switchSiteTab('about')">👤 About Page</button>
+          <button class="st" onclick="switchSiteTab('projects-page')">📁 Projects Page</button>
+        </div>
+
+        <div class="site-section on" id="ss-home">
+          <div class="card">
+            <p class="card-title">Identity</p>
+            <div class="row2">
+              <div class="fg"><label>Full Name</label><input id="s-name" placeholder="Ismael Asumanu Prince"/></div>
+              <div class="fg"><label>Role / Title</label><input id="s-role" placeholder="Graphic Designer…"/></div>
+            </div>
+          </div>
+          <div class="card">
+            <p class="card-title">Hero Background</p>
+            <p class="hint">Upload an image or video. Video plays muted and looped.</p>
+            <div class="fg"><label>Cloudinary URL</label><input id="s-herobg" placeholder="https://res.cloudinary.com/…" oninput="previewHeroBg()"/></div>
+            <div class="upload-area">
+              <input type="file" accept="image/*,video/*" onchange="uploadSiteMedia(event,'s-herobg','hero-bg-preview','hero-prog')"/>
+              <p>Click to upload image or video</p>
+            </div>
+            <div id="hero-bg-preview"></div>
+          </div>
+          <div class="card">
+            <p class="card-title">Contact / Footer</p>
+            <div class="fg"><label>Footer Description</label>
+              <div class="rich-editor-wrap" id="rich-s-contact-desc" data-site-key="contactDesc"></div>
+            </div>
+            <div class="row2">
+              <div class="fg"><label>Email</label><input id="s-email" type="email"/></div>
+              <div class="fg"><label>LinkedIn URL</label><input id="s-linkedin" type="url"/></div>
+            </div>
+            <div class="row2">
+              <div class="fg"><label>Instagram URL</label><input id="s-instagram" type="url"/></div>
+              <div class="fg"><label>Behance URL</label><input id="s-behance" type="url"/></div>
+            </div>
+            <div class="fg"><label>Dribbble URL</label><input id="s-dribbble" type="url"/></div>
+          </div>
+          <button class="btn btn-p" style="max-width:240px;" onclick="saveSiteContent('home')">Save &amp; Publish Home</button>
+        </div>
+
+        <div class="site-section" id="ss-about">
+          <div class="card">
+            <p class="card-title">About Me Card</p>
+            <div class="fg"><label>Short Preview</label><input id="a-about-short"/></div>
+            <div class="fg"><label>Full Detail</label>
+              <div class="rich-editor-wrap" id="rich-a-about-full" data-site-key="aboutFull"></div>
+            </div>
+          </div>
+          <div class="card">
+            <p class="card-title">Education Card</p>
+            <div class="fg"><label>Short Preview</label><input id="a-edu-short"/></div>
+            <div class="fg"><label>Full Detail</label>
+              <div class="rich-editor-wrap" id="rich-a-edu-full" data-site-key="eduFull"></div>
+            </div>
+          </div>
+          <div class="card">
+            <p class="card-title">Work Experience Card</p>
+            <div class="fg"><label>Short Preview</label><input id="a-work-short"/></div>
+            <div class="fg"><label>Full Detail</label>
+              <div class="rich-editor-wrap" id="rich-a-work-full" data-site-key="workFull"></div>
+            </div>
+          </div>
+          <div class="card">
+            <p class="card-title">Skills Card</p>
+            <div class="fg"><label>Short Preview</label><input id="a-skills-short"/></div>
+            <div class="fg"><label>Full Detail (one skill per line)</label>
+              <div class="rich-editor-wrap" id="rich-a-skills-full" data-site-key="skillsFull"></div>
+            </div>
+          </div>
+          <div class="card">
+            <p class="card-title">Stats</p>
+            <div class="row2">
+              <div class="fg"><label>Years Experience</label><input id="a-exp-start" value="2023" type="number"/></div>
+              <div class="fg"><label>Projects Delivered</label><input id="a-projects-count" placeholder="10+"/></div>
+            </div>
+          </div>
+          <button class="btn btn-p" style="max-width:240px;" onclick="saveSiteContent('about')">Save &amp; Publish About</button>
+        </div>
+
+        <div class="site-section" id="ss-projects-page">
+          <div class="card">
+            <p class="card-title">Page Labels</p>
+            <div class="fg"><label>Eyebrow Label</label><input id="pp-eyebrow" value="Selected Work"/></div>
+            <div class="fg"><label>Page Title</label><input id="pp-title" value="Projects &amp; Works"/></div>
+            <div class="fg"><label>End of list text</label><input id="pp-end" value="— End of selected works —"/></div>
+          </div>
+          <div class="card">
+            <p class="card-title">Sidebar Label</p>
+            <div class="fg"><label>Recents section label</label><input id="pp-recents-label" value="Recents"/></div>
+          </div>
+          <button class="btn btn-p" style="max-width:240px;" onclick="saveSiteContent('projects-page')">Save &amp; Publish</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEWS PANEL -->
+    <div class="panel" id="panel-reviews">
+      <div class="reviews-shell">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+          <div>
+            <h2 style="font-size:1rem;margin-bottom:.2rem;">Client Reviews</h2>
+            <p style="font-size:.72rem;color:var(--muted);">Edit the reviews shown on your About page. Changes publish to site-about.json.</p>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="addReview()">+ Add Review</button>
+        </div>
+        <div id="reviews-list"></div>
+        <button class="btn btn-p" style="max-width:240px;margin-top:.5rem;" onclick="saveReviews()">Save &amp; Publish Reviews</button>
+      </div>
+    </div>
+
+    <!-- BOOKINGS PANEL -->
+    <div class="panel" id="panel-bookings">
+      <div class="bookings-shell">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+          <div>
+            <h2 style="font-size:1rem;margin-bottom:.2rem;">Booking Submissions</h2>
+            <p style="font-size:.72rem;color:var(--muted);">Messages sent via your booking page. Stored in bookings.json in your repo.</p>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button class="btn btn-s btn-sm" onclick="refreshBookings()">↻ Refresh</button>
+            <button class="btn btn-g btn-sm" onclick="syncPendingBookings()">⬇ Sync Pending</button>
+            <button class="btn btn-d btn-sm" onclick="clearAllBookings()">Clear All</button>
+          </div>
+        </div>
+        <div id="bookings-list"><div class="booking-empty"><h3>Loading…</h3></div></div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS PANEL -->
+    <div class="panel" id="panel-analytics">
+      <div class="analytics-shell">
+        <div class="analytics-grid">
+          <div class="stat-card"><div class="stat-num" id="an-projects">—</div><div class="stat-label">Total Projects</div><div class="stat-sub" id="an-projects-sub">in your portfolio</div></div>
+          <div class="stat-card"><div class="stat-num" id="an-recents">—</div><div class="stat-label">Recent Works</div><div class="stat-sub" id="an-recents-sub">marked as recent</div></div>
+          <div class="stat-card"><div class="stat-num" id="an-bookings">—</div><div class="stat-label">Total Bookings</div><div class="stat-sub" id="an-bookings-sub">received so far</div></div>
+          <div class="stat-card"><div class="stat-num" id="an-unread">—</div><div class="stat-label">Unread</div><div class="stat-sub" id="an-unread-sub">booking messages</div></div>
+          <div class="stat-card"><div class="stat-num" id="an-reviews">—</div><div class="stat-label">Reviews</div><div class="stat-sub" id="an-reviews-sub">on your about page</div></div>
+          <div class="stat-card"><div class="stat-num" id="an-media">—</div><div class="stat-label">Media Files</div><div class="stat-sub" id="an-media-sub">across all projects</div></div>
+        </div>
+
+        <div class="analytics-section">
+          <p class="ga-title">Bookings Overview (Last 8 Weeks)</p>
+          <div class="weekly-chart" id="weekly-chart"></div>
+          <div class="substat-row">
+            <div class="substat"><div class="substat-num accent" id="bk-week">0</div><div class="substat-lbl">This Week</div></div>
+            <div class="substat"><div class="substat-num accent" id="bk-month">0</div><div class="substat-lbl">This Month</div></div>
+            <div class="substat"><div class="substat-num" id="bk-total">0</div><div class="substat-lbl">All Time</div></div>
+            <div class="substat"><div class="substat-num" id="bk-replied">0</div><div class="substat-lbl">Replied</div></div>
+            <div class="substat"><div class="substat-num" id="bk-response">—</div><div class="substat-lbl">Avg Response</div></div>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <p class="ga-title">Content Health</p>
+          <div class="checklist" id="content-checklist"></div>
+        </div>
+
+        <div class="two-col">
+          <div class="analytics-section">
+            <p class="ga-title">Projects by Year</p>
+            <div class="chart-list" id="year-chart"></div>
+          </div>
+          <div class="analytics-section">
+            <p class="ga-title">Top Tags</p>
+            <div class="chart-list" id="tags-chart"></div>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <p class="ga-title">Recent Bookings</p>
+          <div class="activity-list" id="recent-bookings"></div>
+        </div>
+
+        <div class="analytics-section">
+          <p class="ga-title">Publish Log</p>
+          <div class="activity-list" id="publish-log"></div>
+        </div>
+
+        <div class="analytics-section">
+          <p class="ga-title">Google Analytics</p>
+          <div id="ga-setup-area"></div>
+        </div>
+
+        <div class="analytics-section">
+          <p class="ga-title">System Health</p>
+          <div id="health-list"></div>
+        </div>
+
+        <div class="analytics-section">
+          <p class="ga-title">Export / Backup</p>
+          <p class="hint" style="margin-bottom:.5rem;">Download your content as JSON files. Keep them somewhere safe.</p>
+          <div class="export-row">
+            <button class="btn btn-s btn-sm" onclick="exportData('projects')">⬇ projects.json</button>
+            <button class="btn btn-s btn-sm" onclick="exportData('bookings')">⬇ bookings.json</button>
+            <button class="btn btn-s btn-sm" onclick="exportData('reviews')">⬇ reviews.json</button>
+            <button class="btn btn-p btn-sm" onclick="exportData('all')">⬇ Full backup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- OVERLAYS -->
+<div class="overlay" id="confirm-overlay">
+  <div class="dialog">
+    <h3>Delete Project?</h3>
+    <p>This permanently removes the project.</p>
+    <div class="dialog-acts">
+      <button class="btn btn-d" id="confirm-del-btn">Delete</button>
+      <button class="btn btn-s" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="history-overlay">
+  <div class="dialog" style="width:500px;">
+    <h3>Version History</h3>
+    <div id="history-list" style="max-height:300px;overflow-y:auto;margin-bottom:1rem;"></div>
+    <div class="dialog-acts"><button class="btn btn-s" onclick="closeHistoryModal()">Close</button></div>
+  </div>
+</div>
+
+<div id="status-bar"><span class="sdot"></span><span id="status-msg"></span></div>
+
+<!-- SCRIPTS — order matters -->
+<script src="js/core.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
