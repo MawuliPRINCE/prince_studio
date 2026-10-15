@@ -42,9 +42,13 @@
   </div>
 </div>
 
+<!-- SIDEBAR DRAWER OVERLAY (mobile) -->
+<div class="sb-overlay" id="sb-overlay" onclick="closeSidebarDrawer()"></div>
+
 <!-- MAIN APP -->
 <div id="app">
   <div class="topnav">
+    <button class="btn btn-s btn-sm sb-drawer-toggle" onclick="toggleSidebarDrawer()" aria-label="Toggle projects list">☰</button>
     <span class="topnav-logo">Prince Studio</span>
     <span class="topnav-repo" id="repo-display"></span>
     <div class="topnav-right">
@@ -66,24 +70,44 @@
     <!-- PROJECTS PANEL -->
     <div class="panel on" id="panel-projects">
       <div class="proj-shell">
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
           <div class="sb-head">
             <span class="sb-head-label">Projects (<span id="proj-count">0</span>)</span>
             <button class="btn btn-p btn-sm" onclick="addProject()">+ New</button>
           </div>
-          <div style="padding:.5rem 1rem;display:flex;gap:.5rem;align-items:center;border-bottom:1px solid var(--border);">
-            <input type="checkbox" id="select-all-projects" onchange="toggleSelectAll(this.checked)" style="width:auto;"/>
-            <label for="select-all-projects" style="margin:0;font-size:.6rem;">Select All</label>
-            <button class="btn btn-s btn-sm" onclick="bulkHide()" style="margin-left:auto;">Hide</button>
-            <button class="btn btn-s btn-sm" onclick="bulkShow()">Show</button>
-            <button class="btn btn-d btn-sm" onclick="bulkDelete()">Del</button>
+
+          <div class="sb-filter">
+            <label for="sb-view-filter" style="margin-bottom:.35rem;">View</label>
+            <select id="sb-view-filter" onchange="setSidebarFilter(this.value)" aria-label="Filter projects">
+              <option value="all">All projects</option>
+              <option value="active" selected>Active only</option>
+              <option value="archived">Archived only</option>
+              <option value="hidden">Hidden only</option>
+            </select>
           </div>
+
+          <div class="sb-bulk">
+            <div class="sb-bulk-top">
+              <input type="checkbox" id="select-all-projects" onchange="toggleSelectAll(this.checked)"/>
+              <label for="select-all-projects">Select all</label>
+              <span class="sb-bulk-count" id="sb-bulk-count"></span>
+            </div>
+            <div class="sb-bulk-actions">
+              <button type="button" title="Hide selected" aria-label="Hide selected" onclick="bulkHide()">👁️</button>
+              <button type="button" title="Show selected" aria-label="Show selected" onclick="bulkShow()">✅</button>
+              <button type="button" class="archive" title="Archive / Unarchive selected" aria-label="Archive selected" onclick="bulkArchive()">📦</button>
+              <button type="button" class="danger" title="Delete selected" aria-label="Delete selected" onclick="bulkDelete()">🗑️</button>
+            </div>
+          </div>
+
           <div class="sb-list" id="sb-list"></div>
+
           <div class="pub-bar">
             <button class="btn btn-p" id="pub-btn" onclick="publishAll()" style="flex:1;">Publish All</button>
             <div class="pub-spin" id="pub-spin"></div>
           </div>
         </div>
+
         <div class="editor-area" id="editor-wrap">
           <div class="empty-state">
             <h2>No project selected</h2>
