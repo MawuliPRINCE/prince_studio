@@ -180,14 +180,41 @@ function renderHealth(stats){
     <div class="health-row"><span class="health-key">Last loaded</span><span class="health-val">${new Date().toLocaleString()}</span></div>`;
 }
 function setupGA(){
-  const area=document.getElementById('ga-setup-area');if(!area)return;
-  if(config.gaId){
-    const gaUrl='https://analytics.google.com/analytics/web/#/a/reporting/reporting-overview';
-    area.innerHTML=`<div class="ga-connected"><span class="ga-dot"></span><span style="font-size:.78rem;">Connected to <strong>${esc(config.gaId)}</strong></span><a href="${gaUrl}" target="_blank" rel="noopener">Open Google Analytics ↗</a><button class="btn btn-s btn-sm" onclick="disconnectGA()" style="margin-left:auto;">Disconnect</button></div><p class="hint" style="margin-top:.75rem;">GA doesn't allow embedding dashboards in iframes for security reasons. Click the link above to see your live report.</p>`;
-  }else{
-    area.innerHTML=`<div class="ga-setup"><input id="ga-id-update" placeholder="G-XXXXXXXXXX"/><button class="btn btn-p btn-sm" onclick="saveGaId()">Connect GA</button></div><p class="hint" style="margin-top:.5rem;">Paste your Google Analytics Measurement ID (starts with G-).</p>`;
-  }
+  const area = document.getElementById('ga-setup-area');
+  if(!area) return;
+  const gaUrl = 'https://analytics.google.com/analytics/web/#/a/reporting/reporting-overview';
+  const clarityUrl = 'https://clarity.microsoft.com/';
+  const searchConsoleUrl = 'https://search.google.com/search-console';
+  const gaConnected = !!config.gaId;
+  area.innerHTML = `
+    <div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <a href="${gaUrl}" target="_blank" rel="noopener" class="btn btn-p btn-sm" style="text-decoration:none;">
+        📊 Google Analytics
+      </a>
+      <a href="${clarityUrl}" target="_blank" rel="noopener" class="btn btn-s btn-sm" style="text-decoration:none;">
+        🔥 Microsoft Clarity
+      </a>
+      <a href="${searchConsoleUrl}" target="_blank" rel="noopener" class="btn btn-s btn-sm" style="text-decoration:none;">
+        🔎 Search Console
+      </a>
+    </div>
+    <div style="padding-top:.9rem;border-top:1px solid var(--border);">
+      <div class="health-row"><span class="health-key">📊 Google Analytics</span><span class="health-val">Who visited · where they came from · device · country</span></div>
+      <div class="health-row"><span class="health-key">🔥 Clarity</span><span class="health-val">Session recordings · heatmaps · rage clicks · speed</span></div>
+      <div class="health-row"><span class="health-key">🔎 Search Console</span><span class="health-val">Search queries · indexing · sitemaps</span></div>
+    </div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+      ${gaConnected
+        ? `<div class="ga-connected"><span class="ga-dot"></span><span style="font-size:.78rem;">Connected to <strong>${esc(config.gaId)}</strong></span><button class="btn btn-s btn-sm" onclick="disconnectGA()" style="margin-left:auto;">Disconnect</button></div>`
+        : `<div class="ga-setup"><input id="ga-id-update" placeholder="G-XXXXXXXXXX"/><button class="btn btn-p btn-sm" onclick="saveGaId()">Connect GA</button></div>`
+      }
+    </div>
+  `;
 }
+
+
+
+
 function saveGaId(){
   const val=(document.getElementById('ga-id-update')?.value||'').trim();
   if(!val||!/^G-[A-Z0-9]+$/i.test(val)){showStatus('Invalid GA ID — should look like G-XXXXXXXX','error');return;}
