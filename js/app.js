@@ -35,7 +35,7 @@ async function initApp(){
     renderReviews();
     renderAnalytics();
     await syncPendingBookings();
-    if(config.gaId) setupGA();
+    setupGA();
     initRichEditors();
     setupKeyboardShortcuts();
     startAutosave();

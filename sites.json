@@ -1,0 +1,12 @@
+[
+  {
+    "id": "main",
+    "name": "Live Portfolio",
+    "repo": "my-portfolio"
+  },
+  {
+    "id": "v2",
+    "name": "V2 Clone (Testing)",
+    "repo": "my-portfolio-v2"
+  }
+]

@@ -33,7 +33,7 @@ function makeVideoWebSafe(url){
 }
 
 // ==================== STATE ====================
-let config={},projects=[],activeId=null,projSHA=null;
+let config={},projects=[],sitesList=[],activeSiteId="",activeId=null,projSHA=null;
 let siteData={home:{},about:{}};
 let homeSHA=null,aboutSHA=null,bookingsSHA=null;
 let bookings=[],reviews=[];
@@ -139,3 +139,31 @@ function showStatus(msg,type='info'){
 
 // ==================== ESCAPE ====================
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ==================== MULTI-TENANT LOGIC ====================
+async function loadSites() {
+  try {
+    const res = await fetch('sites.json');
+    sitesList = await res.json();
+    const sel = document.getElementById('site-switcher');
+    if(!sel) return;
+    sel.innerHTML = sitesList.map(s => `<option value="${s.repo}">${s.name}</option>`).join('');
+    
+    // Default to the first site (Live Portfolio)
+    if(sitesList.length > 0) {
+      config.repo = sitesList[0].repo;
+      sel.value = config.repo;
+    }
+  } catch(e) {
+    console.error('Could not load sites.json, falling back to default', e);
+    config.repo = 'my-portfolio';
+  }
+}
+
+function changeSite(newRepo) {
+  if(!newRepo || config.repo === newRepo) return;
+  config.repo = newRepo;
+  localStorage.setItem('cms_default_repo', newRepo);
+  showStatus(`Switched to ${newRepo}. Reloading...`, 'info');
+  setTimeout(() => location.reload(), 1000);
+}

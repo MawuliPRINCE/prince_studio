@@ -50,7 +50,8 @@
   <div class="topnav">
     <button class="btn btn-s btn-sm sb-drawer-toggle" onclick="toggleSidebarDrawer()" aria-label="Toggle projects list">☰</button>
     <span class="topnav-logo">Prince Studio</span>
-    <span class="topnav-repo" id="repo-display"></span>
+    <select id="site-switcher" class="lang-select" style="margin-left:1rem; font-size:0.7rem; padding:0.4rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:4px; outline:none; cursor:pointer;" onchange="changeSite(this.value)"><option value="">Loading...</option></select>
+<span class="topnav-repo" id="repo-display"></span>
     <div class="topnav-right">
       <button class="btn btn-s btn-sm" onclick="openHistoryModal()">🕘 History</button>
       <button class="btn btn-s btn-sm" onclick="logout()">Log out</button>
