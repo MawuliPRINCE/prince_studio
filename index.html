@@ -76,7 +76,7 @@
             <button class="btn btn-p btn-sm" onclick="addProject()">+ New</button>
           </div>
 
-          <div class="sb-filter">
+          <div class="sb-search" style="padding: .5rem 1rem; border-bottom: 1px solid var(--border);"><input type="text" id="project-search" placeholder="Search projects..." style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); outline: none;" oninput="filterSidebar(this.value)"></div><div class="sb-filter">
             <label for="sb-view-filter" style="margin-bottom:.35rem;">View</label>
             <select id="sb-view-filter" onchange="setSidebarFilter(this.value)" aria-label="Filter projects">
               <option value="all">All projects</option>

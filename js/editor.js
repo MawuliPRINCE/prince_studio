@@ -21,10 +21,11 @@ function updateSelectAllState(){
   cb.indeterminate = selectedVisible > 0 && selectedVisible < visible.length;
 }
 function filteredSidebarProjects(){
-  const all = orderedSidebarProjects();
-  if(sidebarFilter === 'active')   return all.filter(p => !p.isArchived && !p.isHidden);
-  if(sidebarFilter === 'archived') return all.filter(p =>  p.isArchived);
-  if(sidebarFilter === 'hidden')   return all.filter(p =>  p.isHidden);
+  let all = orderedSidebarProjects();
+  if(sidebarFilter === "active")   all = all.filter(p => !p.isArchived && !p.isHidden);
+  else if(sidebarFilter === "archived") all = all.filter(p =>  p.isArchived);
+  else if(sidebarFilter === "hidden")   all = all.filter(p =>  p.isHidden);
+  if (window.searchQuery && window.searchQuery.length > 0) { all = all.filter(p => (p.title || "").toLowerCase().includes(window.searchQuery)); }
   return all;
 }
 function renderSidebar(){
@@ -276,7 +277,7 @@ function renderEditor(){
       <div class="ed-title" id="live-title">${esc(p.title)||'Untitled'}</div>
       <div class="ed-sub">ID: ${p.id}</div>
     </div>
-    <button class="btn btn-d btn-sm" onclick="confirmDel('${p.id}')">Delete</button>
+    <div style="display:flex; gap:0.5rem;"><a href="https://mawuliprince.github.io/my-portfolio-v2/project.html?id=${p.id}" target="_blank" class="btn btn-s btn-sm" style="text-decoration:none; border-color:var(--accent); color:var(--accent);">🔗 View Live</a><button class="btn btn-d btn-sm" onclick="confirmDel('')">Delete</button></div>
   </div>
   <div class="ed-grid">
     <div>
