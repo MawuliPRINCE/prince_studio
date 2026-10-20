@@ -1,48 +1,32 @@
 // ==================== INIT ====================
 async function initApp(){
   try{
-    const [pd,hd,ad,bd] = await Promise.all([
-      ghGet('projects.json'),
-      ghGet('site-home.json'),
-      ghGet('site-about.json'),
-      ghGet('bookings.json')
-    ]);
-    if(pd){ projSHA = pd.sha; projects = ghDecode(pd.content); }
-    else { projects = []; projSHA = null; }
-    if(!projects.length){
-      const draft = localStorage.getItem('cms_projects_draft');
-      if(draft){ projects = JSON.parse(draft); }
-    }
+    const [pd,hd,ad,bd] = await Promise.all([ghGet('projects.json'),ghGet('site-home.json'),ghGet('site-about.json'),ghGet('bookings.json')]);
+    if(pd){projSHA=pd.sha;projects=ghDecode(pd.content);}else{projects=[];projSHA=null;}
+    if(!projects.length){const draft=localStorage.getItem('cms_projects_draft');if(draft){projects=JSON.parse(draft);}}
     normalizeProjects();
-    if(hd){ homeSHA = hd.sha; siteData.home = ghDecode(hd.content); fillHomeForm(); }
-    if(ad){ aboutSHA = ad.sha; siteData.about = ghDecode(ad.content); fillAboutForm(); }
-    reviews = Array.isArray(siteData.about.reviews) ? siteData.about.reviews : [];
-    if(bd){
-      bookingsSHA = bd.sha;
-      const parsed = ghDecode(bd.content);
-      bookings = Array.isArray(parsed) ? parsed : [];
-    } else {
-      bookings = [];
-      bookingsSHA = null;
-    }
-    lastBookingCount = bookings.length;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    document.getElementById('repo-display').textContent = `${config.user}/${config.repo}`;
+    if(hd){homeSHA=hd.sha;siteData.home=ghDecode(hd.content);fillHomeForm();}
+    if(ad){aboutSHA=ad.sha;siteData.about=ghDecode(ad.content);fillAboutForm();}
+    reviews=Array.isArray(siteData.about.reviews)?siteData.about.reviews:[];
+    if(bd){bookingsSHA=bd.sha;const parsed=ghDecode(bd.content);bookings=Array.isArray(parsed)?parsed:[];}else{bookings=[];bookingsSHA=null;}
+    lastBookingCount=bookings.length;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('repo-display').textContent=`${config.user}/${config.repo}`;
     initSidebarFilterDropdown();
     renderSidebar();
     renderBookings();
     renderReviews();
     renderAnalytics();
     await syncPendingBookings();
-    setupGA();
+    if(config.gaId)setupGA();
     initRichEditors();
     setupKeyboardShortcuts();
     startAutosave();
     startBookingNotifications();
     setupResizeHandler();
     showStatus('Connected ✓','success');
-  } catch(e){
+  }catch(e){
     loginErr(e.message);
   }
 }
@@ -52,7 +36,6 @@ function initSidebarFilterDropdown(){
   const sel = document.getElementById('sb-view-filter');
   if(!sel) return;
   sel.value = sidebarFilter;
-  // Reflect any archived count in the dropdown label
   const archivedCount = projects.filter(p => p.isArchived).length;
   const opt = sel.querySelector('option[value="archived"]');
   if(opt) opt.textContent = archivedCount ? `Archived (${archivedCount})` : 'Archived only';
@@ -76,15 +59,12 @@ function switchSiteTab(tab){
   if(el) el.classList.add('on');
 }
 
-// ==================== RESIZE (drawer auto-close on desktop) ====================
+// ==================== RESIZE ====================
 function setupResizeHandler(){
   let wasMobile = window.matchMedia('(max-width:768px)').matches;
   window.addEventListener('resize', () => {
     const isMobile = window.matchMedia('(max-width:768px)').matches;
-    if(wasMobile && !isMobile){
-      // Leaving mobile → drawer is now irrelevant, close it
-      closeSidebarDrawer();
-    }
+    if(wasMobile && !isMobile) closeSidebarDrawer();
     wasMobile = isMobile;
   }, { passive: true });
 }
@@ -112,26 +92,39 @@ function startBookingNotifications(){
 }
 
 // ==================== BOOT ====================
-window.onload = () => {
-  // If a local config.js was loaded, log in silently — no form
-  if(window.STUDIO_CONFIG && window.STUDIO_CONFIG.ghToken){
-    handleLogin();
-    return;
+window.onload = async () => {
+  // 1. Load the multi-site registry first
+  if(!window.STUDIO_CONFIG){
+    await loadSites();
   }
+  
+  // 2. Check for saved credentials
   const saved = localStorage.getItem('cms_cfg');
   const token = sessionStorage.getItem('cms_tok');
+  
   if(saved && token){
     const c = JSON.parse(saved);
     const cloud = c.cloud || localStorage.getItem('cms_cloud') || '';
     const preset = c.preset || localStorage.getItem('cms_preset') || '';
-    config = { ...c, token, cloud, preset };
+    
+    // 3. Respect the active site from the dropdown
+    const defaultRepo = localStorage.getItem('cms_default_repo') || c.repo;
+    
+    config = { ...c, repo: defaultRepo, token, cloud, preset };
+    
+    // 4. Update the dropdown visually
+    const sel = document.getElementById('site-switcher');
+    if(sel && defaultRepo) sel.value = defaultRepo;
+    
+    // 5. Pre-fill the login form
     document.getElementById('gh-user').value = c.user || '';
-    document.getElementById('gh-repo').value = c.repo || '';
+    document.getElementById('gh-repo').value = defaultRepo || '';
     document.getElementById('gh-branch').value = c.branch || 'main';
     document.getElementById('gh-token').value = token;
     document.getElementById('cl-cloud').value = cloud;
     document.getElementById('cl-preset').value = preset;
     if(c.gaId) document.getElementById('ga-id').value = c.gaId;
+    
     initApp();
   }
 };

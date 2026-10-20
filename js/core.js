@@ -143,20 +143,20 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').repl
 // ==================== MULTI-TENANT LOGIC ====================
 async function loadSites() {
   try {
-    const res = await fetch('sites.json');
+    const res = await fetch("sites.json");
+    if(!res.ok) throw new Error("sites.json not found");
     sitesList = await res.json();
-    const sel = document.getElementById('site-switcher');
+    const sel = document.getElementById("site-switcher");
     if(!sel) return;
-    sel.innerHTML = sitesList.map(s => `<option value="${s.repo}">${s.name}</option>`).join('');
-    
-    // Default to the first site (Live Portfolio)
+    sel.innerHTML = sitesList.map(s => `<option value="${s.repo}">${s.name}</option>`).join("");
     if(sitesList.length > 0) {
-      config.repo = sitesList[0].repo;
-      sel.value = config.repo;
+      const active = localStorage.getItem("cms_default_repo") || sitesList[0].repo;
+      sel.value = active;
     }
   } catch(e) {
-    console.error('Could not load sites.json, falling back to default', e);
-    config.repo = 'my-portfolio';
+    console.error("Could not load sites.json", e);
+    const sel = document.getElementById("site-switcher");
+    if(sel) sel.innerHTML = "<option value=\"my-portfolio\">Live Portfolio (Fallback)</option>";
   }
 }
 
