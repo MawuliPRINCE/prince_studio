@@ -51,6 +51,7 @@
     <button class="btn btn-s btn-sm sb-drawer-toggle" onclick="toggleSidebarDrawer()" aria-label="Toggle projects list">☰</button>
     <span class="topnav-logo">Prince Studio</span>
     <select id="site-switcher" class="lang-select" style="margin-left:1rem; font-size:0.7rem; padding:0.4rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:4px; outline:none; cursor:pointer;" onchange="changeSite(this.value)"><option value="">Loading...</option></select>
+<button class="btn btn-s btn-sm" onclick="openSiteManager()" style="margin-left: 0.5rem;" title="Manage Sites">⚙️</button>
 <span class="topnav-repo" id="repo-display"></span>
     <div class="topnav-right">
       <button class="btn btn-s btn-sm" onclick="openHistoryModal()">🕘 History</button>
@@ -348,6 +349,21 @@
   </div>
 </div>
 
+<div class="overlay" id="site-manager-overlay">
+  <div class="dialog" style="width:450px;">
+    <h3>Manage Custom Sites</h3>
+    <p style="margin-bottom:1rem;">Add new repos to your multi-site dropdown. These are saved in this browser.</p>
+    <div id="custom-sites-list" style="margin-bottom:1rem; max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:0.5rem;"></div>
+    <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+      <input type="text" id="new-site-name" placeholder="Site Name (e.g. Welldone)" style="flex:1; padding:0.5rem; font-size:0.8rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:4px;"/>
+      <input type="text" id="new-site-repo" placeholder="Repo Name" style="flex:1; padding:0.5rem; font-size:0.8rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:4px;"/>
+    </div>
+    <div class="dialog-acts">
+      <button class="btn btn-p btn-sm" onclick="addCustomSite()">Add Site</button>
+      <button class="btn btn-s btn-sm" onclick="closeSiteManager()">Close</button>
+    </div>
+  </div>
+</div>
 <div id="status-bar"><span class="sdot"></span><span id="status-msg"></span></div>
 
 <!-- SCRIPTS — order matters -->

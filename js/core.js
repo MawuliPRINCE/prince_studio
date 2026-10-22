@@ -143,9 +143,10 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').repl
 // ==================== MULTI-TENANT LOGIC ====================
 async function loadSites() {
   try {
-    const res = await fetch("sites.json");
-    if(!res.ok) throw new Error("sites.json not found");
-    sitesList = await res.json();
+    const res = await fetch("sites.json?t=" + Date.now());
+    let baseSites = res.ok ? await res.json() : [];
+    const custom = getCustomSites();
+    sitesList = [...baseSites, ...custom];
     const sel = document.getElementById("site-switcher");
     if(!sel) return;
     sel.innerHTML = sitesList.map(s => `<option value="${s.repo}">${s.name}</option>`).join("");
@@ -154,9 +155,7 @@ async function loadSites() {
       sel.value = active;
     }
   } catch(e) {
-    console.error("Could not load sites.json", e);
-    const sel = document.getElementById("site-switcher");
-    if(sel) sel.innerHTML = "<option value=\"my-portfolio\">Live Portfolio (Fallback)</option>";
+    console.error("Could not load sites", e);
   }
 }
 
@@ -167,3 +166,54 @@ function changeSite(newRepo) {
   showStatus(`Switched to ${newRepo}. Reloading...`, 'info');
   setTimeout(() => location.reload(), 1000);
 }
+
+// ==================== CUSTOM SITE MANAGER ====================
+function getCustomSites() {
+  try { return JSON.parse(localStorage.getItem('cms_custom_sites') || '[]'); } catch(e) { return []; }
+}
+
+window.openSiteManager = function() {
+  const list = document.getElementById('custom-sites-list');
+  const custom = getCustomSites();
+  if(!custom.length) {
+    list.innerHTML = '<p style="font-size:0.75rem; color:var(--muted);">No custom sites added yet.</p>';
+  } else {
+    list.innerHTML = custom.map((s, i) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); padding:0.5rem; border-radius:4px; font-size:0.75rem;">
+        <span><strong>${s.name}</strong> (${s.repo})</span>
+        <button class="btn btn-d btn-sm" onclick="removeCustomSite(${i})" style="padding:0.2rem 0.5rem; font-size:0.6rem;">Delete</button>
+      </div>
+    `).join('');
+  }
+  document.getElementById('site-manager-overlay').classList.add('show');
+};
+
+window.closeSiteManager = function() {
+  document.getElementById('site-manager-overlay').classList.remove('show');
+};
+
+window.addCustomSite = function() {
+  const name = document.getElementById('new-site-name').value.trim();
+  const repo = document.getElementById('new-site-repo').value.trim();
+  if(!name || !repo) return alert('Please enter both a name and a repo.');
+  
+  const custom = getCustomSites();
+  if(custom.find(s => s.repo === repo)) return alert('This repo is already in the list.');
+  
+  custom.push({ name, repo });
+  localStorage.setItem('cms_custom_sites', JSON.stringify(custom));
+  
+  document.getElementById('new-site-name').value = '';
+  document.getElementById('new-site-repo').value = '';
+  
+  loadSites(); // Refresh the dropdown
+  openSiteManager(); // Refresh the list
+};
+
+window.removeCustomSite = function(index) {
+  const custom = getCustomSites();
+  custom.splice(index, 1);
+  localStorage.setItem('cms_custom_sites', JSON.stringify(custom));
+  loadSites();
+  openSiteManager();
+};
