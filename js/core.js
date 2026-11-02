@@ -217,3 +217,32 @@ window.removeCustomSite = function(index) {
   loadSites();
   openSiteManager();
 };
+
+// ==================== MULTI-TENANT LOGIC ====================
+async function loadSites() {
+  try {
+    const res = await fetch("sites.json?t=" + Date.now());
+    if (!res.ok) throw new Error("sites.json not found");
+    sitesList = await res.json();
+    
+    const sel = document.getElementById("site-switcher");
+    if (!sel) return;
+    
+    sel.innerHTML = sitesList.map(s => `<option value="${s.repo}">${s.name}</option>`).join("");
+    
+    if (sitesList.length > 0) {
+      const active = localStorage.getItem("cms_default_repo") || sitesList[0].repo;
+      sel.value = active;
+    }
+  } catch(e) {
+    console.error("Could not load sites.json", e);
+  }
+}
+
+function changeSite(newRepo) {
+  if (!newRepo || config.repo === newRepo) return;
+  config.repo = newRepo;
+  localStorage.setItem('cms_default_repo', newRepo);
+  showStatus(`Switched to ${newRepo}. Reloading...`, 'info');
+  setTimeout(() => location.reload(), 800);
+}

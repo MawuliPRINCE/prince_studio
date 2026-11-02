@@ -14,10 +14,7 @@ async function initApp(){
     document.getElementById('app').style.display='flex';
     document.getElementById('repo-display').textContent=`${config.user}/${config.repo}`;
     initSidebarFilterDropdown();
-    renderSidebar();
-    renderBookings();
-    renderReviews();
-    renderAnalytics();
+    renderSidebar(); renderBookings(); renderReviews(); renderAnalytics();
     await syncPendingBookings();
     if(config.gaId)setupGA();
     initRichEditors();
@@ -26,37 +23,24 @@ async function initApp(){
     startBookingNotifications();
     setupResizeHandler();
     showStatus('Connected ✓','success');
-  }catch(e){
-    loginErr(e.message);
-  }
-}
-
-// ==================== SIDEBAR FILTER DROPDOWN ====================
-function initSidebarFilterDropdown(){
-  const sel = document.getElementById('sb-view-filter');
-  if(!sel) return;
-  sel.value = sidebarFilter;
-  const archivedCount = projects.filter(p => p.isArchived).length;
-  const opt = sel.querySelector('option[value="archived"]');
-  if(opt) opt.textContent = archivedCount ? `Archived (${archivedCount})` : 'Archived only';
+  }catch(e){ loginErr(e.message); }
 }
 
 // ==================== TABS ====================
-const tabIds = ['projects','site','reviews','bookings','analytics'];
+const tabIds=['projects','site','reviews','bookings','analytics'];
 function switchTab(tab){
-  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('on', tabIds[i] === tab));
-  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('on', tabIds[i] === tab));
-  if(tab === 'bookings') refreshBookings();
-  if(tab === 'analytics') renderAnalytics();
-  if(tab === 'projects') closeSidebarDrawer();
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',tabIds[i]===tab));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('on',tabIds[i]===tab));
+  if(tab==='bookings') refreshBookings();
+  if(tab==='analytics') renderAnalytics();
+  if(tab==='projects') closeSidebarDrawer();
 }
 function switchSiteTab(tab){
-  document.querySelectorAll('.st').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.st').forEach(b=>b.classList.remove('on'));
   if(event && event.target) event.target.classList.add('on');
-  document.querySelectorAll('.site-section').forEach(s => s.classList.remove('on'));
-  const map = { home:'ss-home', about:'ss-about', 'projects-page':'ss-projects-page' };
-  const el = document.getElementById(map[tab]);
-  if(el) el.classList.add('on');
+  document.querySelectorAll('.site-section').forEach(s=>s.classList.remove('on'));
+  const map={'home':'ss-home','about':'ss-about','projects-page':'ss-projects-page'};
+  const el = document.getElementById(map[tab]); if(el) el.classList.add('on');
 }
 
 // ==================== RESIZE ====================
@@ -93,12 +77,8 @@ function startBookingNotifications(){
 
 // ==================== BOOT ====================
 window.onload = async () => {
-  // 1. Load the multi-site registry first
-  if(!window.STUDIO_CONFIG){
-    await loadSites();
-  }
+  await loadSites(); // Loads the multi-site dropdown first
   
-  // 2. Check for saved credentials
   const saved = localStorage.getItem('cms_cfg');
   const token = sessionStorage.getItem('cms_tok');
   
@@ -106,17 +86,13 @@ window.onload = async () => {
     const c = JSON.parse(saved);
     const cloud = c.cloud || localStorage.getItem('cms_cloud') || '';
     const preset = c.preset || localStorage.getItem('cms_preset') || '';
-    
-    // 3. Respect the active site from the dropdown
     const defaultRepo = localStorage.getItem('cms_default_repo') || c.repo;
     
     config = { ...c, repo: defaultRepo, token, cloud, preset };
     
-    // 4. Update the dropdown visually
     const sel = document.getElementById('site-switcher');
     if(sel && defaultRepo) sel.value = defaultRepo;
     
-    // 5. Pre-fill the login form
     document.getElementById('gh-user').value = c.user || '';
     document.getElementById('gh-repo').value = defaultRepo || '';
     document.getElementById('gh-branch').value = c.branch || 'main';
